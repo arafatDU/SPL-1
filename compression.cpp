@@ -154,6 +154,17 @@ void printCodes(struct MinHeapNode* root, string str)
     printCodes(root->right, str + "1");
 }
 
+void printTree(ostream & out,struct MinHeapNode* root,int indent)
+{
+	if (root != NULL)
+	{
+		printTree(out, root->right, indent + 4);
+		out << setw(indent) << " " << (char)root->data << endl;
+		printTree(out, root->left, indent + 4);
+	}
+}
+
+
 
 
 // The main function that builds a Huffman Tree and
@@ -195,6 +206,30 @@ void HuffmanCodes(int data[], int freq[], int size)
 }
 
 
+
+void Convert_StringBits_to_IntegerBits()
+{
+	string temp;
+	for (int i = 0; i < charactermap.size();i++)
+   	 {
+		temp = charactermap[i].second;                   
+		for(int j=0;j < temp.size();j++)          //For storing strings bits into integer vector,for 								   writing bit by bit in file 
+		{
+			if(temp[j] == '1')
+			{
+				Huffcode.push_back(1);
+			}
+			else
+			{
+				Huffcode.push_back(0);
+			}
+		}
+     		//cout  <<"\t"<< charactermap[i].first <<"\t"<< charactermap[i].second<<"\n";
+  	  }
+	Huffcode.push_back(-1);
+}
+
+
 // Driver program to test above functions
 int main()
 {
@@ -229,4 +264,17 @@ int main()
 	cout<<"\n\tCharacter\t\tHuffman Code\n";
 	
    	HuffmanCodes(ASCII_values,actual_frequency,count1);  //Function to build Huffman tree
+
+	Convert_StringBits_to_IntegerBits();          //Converts character from charactermap to int vector
+
+	int len = strlen(filename);
+	filename[len-1] = 'p';
+	filename[len-2] = 'm';
+	filename[len-3] = 'c';
+	cout<<"\n";
+	cout<<"\nHuffman encoding Tree : \n";
+	printTree(cout,minHeap.top(),0);      //To display formed Tree  with '■' as parent nodes(including root)
+	
+	
+
 }
