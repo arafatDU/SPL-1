@@ -14,8 +14,6 @@ vector<pair<char,string> > charactermap;
 vector<int> Huffcode;
 
 
-
-
 struct MinHeapNode 
 {
     //input characters
@@ -49,13 +47,68 @@ struct compare
 };
 
 
+class BitwiseWrite
+{
+	private:
+	  char buf;
+	  int Tbits;
+	  ostream& out;
+	public:
+
+
+  BitwiseWrite(ostream & os) : out(os),buf(0),Tbits(0)
+  {
+ 							//clear buffer and bit counter
+  }
+
+ 
+  void flush();   	 // write buffer into output file and clear it 
+  void writeBit(int i);
+};
+
+
+
+void BitwiseWrite::flush() {
+  out.put(buf);
+  out.flush();
+  buf = Tbits = 0;
+}
+
+void BitwiseWrite::writeBit(int i) // Write the least significant bit of the argument to the bit buffer
+{
+	if( i == -1)     //for last bit if buffer is not full still flush buffer
+	{
+		flush();
+	}
+  	if(Tbits == 8) //if buffer full(8 bit) clear buffer
+  	{
+    	flush();
+  	}
+  
+  //if the int is 1, we must put the bit 1 into the buffer
+  unsigned char mask = 1;
+  if(i == 1) 
+  {
+    mask = mask << (7 - Tbits);
+    buf = buf | mask;
+  } 
+  //if the int is 0, we must put the bit 0 into the buffer
+  if(i == 0) 
+  {
+    mask = mask << (7 - Tbits);
+    mask = ~mask;
+    buf = buf & mask;
+  } 
+  Tbits++;                   //increment Tbits++
+}
+
 
 void calculate_frequency(int frequency[],char filename[])
 {
     char ch,ch1;
     int y;
     int f;
-   int x;
+    int x;
     ifstream fin;
     fin.open(filename);
 	if(!fin.is_open())
@@ -124,6 +177,11 @@ void printFrequencyTable(int actual_frequency[],int ASCII_values[])
 	}
 }
 
+// Prints huffman codes from the root of Huffman Tree.
+int p;
+string str1= "";
+int n=0;
+
 void printCodes(struct MinHeapNode* root, string str)
 {
 
@@ -137,10 +195,10 @@ void printCodes(struct MinHeapNode* root, string str)
         cout <<"\t    "<< ch << "\t\t\t  " << str << "\n";
 	if(root->data == ' ')
 	{
-		codes = codes + "_" + " " + str + "�";
+		codes = codes + "_" + " " + str + "*";
 	}
 	else
-		codes = codes + ch + " " + str + "�";
+		codes = codes + ch + " " + str + "*";
 	for(int i = 0;i < count3;i++)
 	{
 
@@ -229,6 +287,46 @@ void Convert_StringBits_to_IntegerBits()
 	Huffcode.push_back(-1);
 }
 
+void write_codes()     //creates codes file
+{
+	ofstream out;
+	out.open("codes.txt");
+	for(int i=0; i < codes.size();i++)
+	{
+		if(codes[i] != '*')
+		{
+			out<<codes[i];
+			
+		}
+		else
+			out<<endl;
+	}
+	out.close();
+}
+
+int ct = 0;
+void cal_compressionRatio()
+{
+	long double csize = 0;
+	long double size = 0;
+	long double cratio;
+	long long lsize = 0;
+	long long lcsize = 0;
+	char ch;
+	int x;
+	x = count3;
+	x = x - 1;
+	lsize = x;
+	lcsize = Huffcode.size()/8;
+	size = x * 8;
+	size = size /8;
+	cout<<"\nActual Size of File  = "<<lsize<<" Bytes";
+	csize = Huffcode.size()/8;
+	cout<<"\nSize of Compressed File = "<<lcsize<<" Bytes";
+	cratio = (csize/size)*100;
+	cout<<"\nCompression Ratio achieved : "<<cratio<<"% !";
+}
+
 
 // Driver program to test above functions
 int main()
@@ -274,7 +372,23 @@ int main()
 	cout<<"\n";
 	cout<<"\nHuffman encoding Tree : \n";
 	printTree(cout,minHeap.top(),0);      //To display formed Tree  with '■' as parent nodes(including root)
-	
+	write_codes();
+	ofstream fout;
+  	fout.open(filename,ios::binary);
+
+	cal_compressionRatio();                //To calculate compression ratio
+	int temp1;
+	BitwiseWrite s(fout);
+	cout<<"\nProcessing.... Plz wait !!!";
+	for(int d = 0;d < Huffcode.size();d++) {
+	    temp1 = Huffcode[d];
+	    s.writeBit(temp1);                //To write Bit by bit by bit in compressed file
+	  }
+	cout<<"\nCompression Successful !!!";
+	int v;
+	cout<<"\nEnter any key to exit : ";
+	cin>>v;
+    	return 0;
 	
 
 }
