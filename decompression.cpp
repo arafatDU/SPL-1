@@ -1,6 +1,57 @@
 #include<bits/stdc++.h>
 using namespace std;
 
+unsigned long int total_traversal = 0;
+
+class BitwiseRead {
+private:
+  char buf;
+  int nbits;        //how many bits have been read from the buffer
+  istream& in;
+public:
+
+  /* Initialize a BitwiseRead that will use the given istream for input */
+  BitwiseRead(istream & is);
+
+  /* Fill the buffer from the input */
+  void fill();
+  
+  /* Read the next bit from the bit buffer. Fill the buffer form the input stream first if needed.
+  Return 1 if the bit read is 1, 0 if bit read is 0 */
+  int readBit();
+};
+
+BitwiseRead::BitwiseRead(istream & is) : in(is) {
+    buf = 0;
+    nbits = 8;
+}
+
+
+
+void BitwiseRead::fill() 
+{
+	buf = in.get();
+	nbits = 0;
+}
+
+int BitwiseRead::readBit() 
+{
+  if(nbits == 8) {
+    fill();
+ }
+  
+  //uses a mask to extract the nbits'th bit
+  unsigned char mask = 1;
+  mask = mask << (7-nbits); 
+  mask = mask & buf;
+  nbits++;
+  if(mask == 0) {
+    return 0;
+  }
+  else {
+    return 1;
+  } 
+}
 
 
 class Huffman
@@ -26,7 +77,8 @@ class Huffman
 		void insert(char ch, string code);
 		void printTree(ostream & out, nodePointer root, int indent);
 		void displayDecodingTree(ostream & out);
-		private:
+		char decode(BitwiseRead &in);
+        private:
 		nodePointer root;
 	};
 inline Huffman::Huffman()
@@ -92,6 +144,32 @@ void Huffman::printTree(ostream & out, Huffman::nodePointer root,int indent)  //
 	}
 }
 
+char Huffman::decode(BitwiseRead &in)             //To decode from huffman tree
+{
+	Huffman::nodePointer p;
+	p = root;
+	int bit;
+	while(true)
+	{
+		bit = in.readBit();
+		//count++;
+		if(bit == 1)
+		{
+			p = p -> right;
+		}
+		if(bit == 0)
+		{
+			p = p -> left;
+		}
+		if(p->right == NULL || p->left == NULL)
+		{
+			break;
+		}
+	}
+	total_traversal++;
+	return (p->data);
+}
+
 
 
 int main()
@@ -116,6 +194,38 @@ int main()
 	cout << "\nHere is the Huffman decoding tree:\n";
 	h.displayDecodingTree(cout);
 	cout << endl;
+
+    cout << "\nEnter Name of Compressed file : ";
+	cin >> filename;
+	ifstream in;
+	ofstream fout;
+	fout.open("Decompressed.txt");
+	in.open(filename,ios::binary);
+	BitwiseRead os(in);
+	if (!in.is_open())
+	{
+		cout << "Error !!! Cannot open Compressed file.\n";
+		exit(1);
+	}
+	cout<<"\nProcessing..... Plz Wait";
+	char ch3;
+	ch3=char(129);
+	while(true)
+	{
+		
+		data = h.decode(os);
+		if( data == ch3)
+		{
+			break;
+		}
+		current_bits++;
+		fout << data;
+	}
+	cout<<"\nDecompression Successful !!!\n";
+	cout<<"\nTotal Number of Times Tree Traversed : "<<total_traversal;
+	int l;
+	cout<<"\nEnter any key to exit : ";
+	cin>>l;
 
     return 0;
 }
