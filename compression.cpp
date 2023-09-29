@@ -370,8 +370,8 @@ int main()
 	filename[len-2] = 'm';
 	filename[len-3] = 'c';
 	cout<<"\n";
-	cout<<"\nHuffman encoding Tree : \n";
-	printTree(cout,minHeap.top(),0);      //To display formed Tree  with '■' as parent nodes(including root)
+	//cout<<"\nHuffman encoding Tree : \n";
+	//printTree(cout,minHeap.top(),0);      //To display formed Tree  with '■' as parent nodes(including root)
 	write_codes();
 	ofstream fout;
   	fout.open(filename,ios::binary);
