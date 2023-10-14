@@ -2,6 +2,7 @@
 using namespace std;
 
 const int WINDOW_SIZE = 4096;
+const int DECOMP_BUFF_SIZE = 72;
 
 class Llist
 {
@@ -105,6 +106,7 @@ Llist *HashTable::SearchTable(const char *buff, int p)
 // Forward declaraction of main functions
 void Compress(const char *buff, const int size, const string &fn);
 int find_match(HashTable *hash, const char *buff, int &winstart, int &current, const int size);
+void Decompress(const char *memblock, const int size, const std::string &filename);
 
 class BitBuffer
 {
@@ -258,33 +260,54 @@ void BitBuffer::writeFooter()
 
 int main()
 {
-    string filename;
-    string mode;
-
-    mode = "compress";
-    filename = "testfile.txt";
-
-    int size;
-    unique_ptr<char> data;
-    ifstream fin(filename, ios::in | ios::binary | ios::ate);
-    if (fin.is_open())
+    try
     {
-        size = fin.tellg();
-        data = unique_ptr<char>(new char[size]);
-        fin.seekg(0, ios::beg);
-        fin.read(data.get(), size);
-        fin.close();
+        string filename;
+        string mode;
+
+        // mode = "compress";
+        // filename = "testfile.txt";
+        cout << "Enter file name: ";
+        cin >> filename;
+        cout << "Enter Mode: ";
+        cin >> mode;
+
+        int size;
+        unique_ptr<char> data;
+        ifstream fin(filename, ios::in | ios::binary | ios::ate);
+        if (fin.is_open())
+        {
+            size = fin.tellg();
+            data = unique_ptr<char>(new char[size]);
+            fin.seekg(0, ios::beg);
+            fin.read(data.get(), size);
+            fin.close();
+        }
+        else
+        {
+            throw runtime_error("Could not open input file '" + filename + "'");
+        }
+
+        if (mode.compare("compress") == 0)
+        {
+            // Send message to user of the mode we chose
+            cout << "Compressing '" + filename + "'" << endl;
+            Compress(data.get(), size, filename);
+        }
+        else if (mode.compare("decompress") == 0)
+        {
+            // Send message to user of the mode we chose
+            std::cout << "Decompressing '" + filename + "'" << std::endl;
+            Decompress(data.get(), size, filename);
+        }
+        else
+        {
+            std::cout << "Mode '" + mode + "' is not valid, expected 'compress' or 'decompress'" << std::endl;
+        }
     }
-    else
+    catch (std::exception &ex)
     {
-        throw runtime_error("Could not open input file '" + filename + "'");
-    }
-
-    if (mode.compare("compress") == 0)
-    {
-        // Send message to user of the mode we chose
-        cout << "Compressing '" + filename + "'" << endl;
-        Compress(data.get(), size, filename);
+        std::cout << ex.what() << std::endl;
     }
 
     return 0;
@@ -391,6 +414,189 @@ int find_match(HashTable *hash, const char *buff, int &winstart, int &current, c
                 }
             }
             return -1;
+        }
+    }
+}
+
+void Decompress(const char *memblock, const int size, const std::string &filename)
+{
+    char buff[DECOMP_BUFF_SIZE];
+    int len = 0;
+    int beg = 0;
+    int end = 0;
+    char cache[WINDOW_SIZE];
+    int cacheend = 0;
+
+    // Open output file
+    const std::string decomp_file = filename + ".decomp";
+    std::ofstream fout(decomp_file, std::ios::out | std::ios::binary);
+    for (int i = 0; i < size; i++)
+    {
+        char temp;
+        temp = memblock[i];
+        for (int j = 7; j >= 0; j--)
+        {
+            if (temp & 1)
+            {
+                buff[end + j] = 49;
+            }
+            else
+            {
+                buff[end + j] = 48;
+            }
+
+            temp >>= 1;
+        }
+
+        end += 8;
+        if (end == DECOMP_BUFF_SIZE)
+        {
+            end = 0;
+        }
+
+        len += 8;
+        if (len > DECOMP_BUFF_SIZE)
+        {
+            throw std::runtime_error("ERROR: Length overwrote data");
+        }
+
+        if (len + 8 >= DECOMP_BUFF_SIZE || i == size - 1)
+        {
+            while (len > 16)
+            {
+                if (buff[beg] == 48 && len >= 9)
+                {
+                    beg++;
+                    if (beg == DECOMP_BUFF_SIZE)
+                    {
+                        beg = 0;
+                    }
+
+                    char byte = 0;
+                    for (int j = 0; j < 8; j++)
+                    {
+                        if (buff[beg] == 48)
+                        {
+                            byte = byte | 0;
+                        }
+                        else
+                        {
+                            byte = byte | 1;
+                        }
+
+                        if (j < 7)
+                        {
+                            byte <<= 1;
+                        }
+
+                        beg++;
+
+                        if (beg == DECOMP_BUFF_SIZE)
+                        {
+                            beg = 0;
+                        }
+                    }
+
+                    if (fout.is_open())
+                    {
+                        fout.write(&byte, 1);
+                        cache[cacheend] = byte;
+                        cacheend++;
+                        if (cacheend == WINDOW_SIZE)
+                        {
+                            cacheend = 0;
+                        }
+                    }
+
+                    len -= 9;
+                }
+                else if (buff[beg] == 49 && len >= 18)
+                {
+                    beg++;
+                    if (beg == DECOMP_BUFF_SIZE)
+                    {
+                        beg = 0;
+                    }
+
+                    int location = 0;
+                    for (int j = 0; j < 12; j++)
+                    {
+                        if (buff[beg] == 48)
+                        {
+                            location = location | 0;
+                        }
+                        else
+                        {
+                            location = location | 1;
+                        }
+
+                        if (j < 11)
+                        {
+                            location <<= 1;
+                        }
+
+                        beg++;
+                        if (beg == DECOMP_BUFF_SIZE)
+                        {
+                            beg = 0;
+                        }
+                    }
+
+                    int length = 0;
+                    for (int j = 0; j < 5; j++)
+                    {
+                        if (buff[beg] == 48)
+                        {
+                            length = length | 0;
+                        }
+                        else
+                        {
+                            length = length | 1;
+                        }
+
+                        if (j < 4)
+                        {
+                            length <<= 1;
+                        }
+
+                        beg++;
+
+                        if (beg == DECOMP_BUFF_SIZE)
+                        {
+                            beg = 0;
+                        }
+                    }
+
+                    length += 4;
+                    len -= 18;
+                    char byte = 0;
+                    for (int j = 0; j < length; j++)
+                    {
+                        int tem = cacheend - location;
+                        if (tem < 0)
+                        {
+                            tem += WINDOW_SIZE;
+                        }
+
+                        byte = cache[tem];
+
+                        if (fout.is_open())
+                        {
+                            fout.write(&byte, 1);
+                            cache[cacheend] = byte;
+                            cacheend++;
+                            if (cacheend == WINDOW_SIZE)
+                            {
+                                cacheend = 0;
+                            }
+                        }
+                    }
+                }
+                else
+                {
+                    break;
+                }
+            }
         }
     }
 }
