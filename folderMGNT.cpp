@@ -188,3 +188,108 @@ vector<string> DirectoryManager::sortOutFiles(vector<string> folderList)
     }
     return ruleOut; // Output Vector without Files
 }
+
+class FolderMGMT
+{
+    private:
+        DirectoryManager* dirMGMT;
+        FileManager* fileMGMT;
+
+    public:
+        FolderMGMT();
+        ~FolderMGMT();
+
+        //Class-Functions
+        void initialize();
+        void outputFolderList();
+        void outputFileList();
+};
+
+FolderMGMT::FolderMGMT()
+{
+    dirMGMT = new DirectoryManager;
+    fileMGMT = new FileManager;
+}
+
+FolderMGMT::~FolderMGMT()
+{
+    delete (dirMGMT);
+    delete (fileMGMT);
+}
+
+void FolderMGMT::initialize()
+{
+    int choice = 0;
+    string path = "";
+    bool running = true;
+
+    while (running)
+    {
+        cout << "\n########################################\n"
+             << "\t\tFolderMGMT\n\n"
+             << "Path:\t\t[" << dirMGMT->getDirPath() << "]" << endl
+             << "\n########################################\n"
+             << "1 - change path" << endl
+             << "2 - output folders in path" << endl
+             << "3 - output files in path" << endl
+             << "9 - exit" << endl;
+
+        cout << "Enter: ";
+        cin >> choice;
+
+        switch (choice)
+        {
+            case 1:
+                cout << "\nPlease enter a path: ";
+                cin >> path;
+                dirMGMT->setDirPath(path);
+                break;
+            case 2:
+                cout << "\nOutput of [" << dirMGMT->getDirPath() << "]" << endl;
+                outputFolderList();
+                cin.get();
+                break;
+            case 3:
+                cout << "\nOutput of [" << dirMGMT->getDirPath() << "]" << endl;
+                outputFileList();
+                cin.get();
+                break;
+            case 9:
+                cout << "Exiting FolderMGMT" << endl;
+                running = false;
+                break;
+            default:
+                cout << "wrong entry" << endl;
+                break;
+        }
+    }
+}
+
+void FolderMGMT::outputFolderList()
+{
+    cout << "Here is all folders:" << endl;
+    vector<string> list = dirMGMT->getDirectoryList();
+    for (const string& entry : list)
+    {
+        cout << entry << endl;
+    }
+}
+
+void FolderMGMT::outputFileList()
+{
+    cout << "Here is all files:" << endl;
+    vector<string> list = fileMGMT->getFileList(dirMGMT->getFullDirectoryList());
+    for (const string& entry : list)
+    {
+        cout << entry << endl;
+    }
+}
+
+int main()
+{
+    FolderMGMT* fmgmt = new FolderMGMT;
+    fmgmt->initialize();
+    cin.get();
+    delete fmgmt;
+    return 0;
+}
