@@ -3,6 +3,8 @@
 #include <sys/stat.h>
 
 using namespace std;
+void compressedAllFiles( vector<string> filePaths);
+
 
 class FileManager
 {
@@ -203,6 +205,7 @@ class FolderMGMT
         void initialize();
         void outputFolderList();
         void outputFileList();
+        vector<string> getFilePathList();
 };
 
 FolderMGMT::FolderMGMT()
@@ -232,6 +235,7 @@ void FolderMGMT::initialize()
              << "1 - change path" << endl
              << "2 - output folders in path" << endl
              << "3 - output files in path" << endl
+             << "4 - Compressed all the files" << endl
              << "9 - exit" << endl;
 
         cout << "Enter: ";
@@ -252,6 +256,13 @@ void FolderMGMT::initialize()
             case 3:
                 cout << "\nOutput of [" << dirMGMT->getDirPath() << "]" << endl;
                 outputFileList();
+                cin.get();
+                break;
+            case 4:
+                cout <<"\n---------------------------------------------------"
+                << "\nCompression of [" << dirMGMT->getDirPath() << "]\n" <<
+                "---------------------------------------------------"<< endl;
+                compressedAllFiles(getFilePathList());
                 cin.get();
                 break;
             case 9:
@@ -279,9 +290,87 @@ void FolderMGMT::outputFileList()
 {
     cout << "Here is all files:" << endl;
     vector<string> list = fileMGMT->getFileList(dirMGMT->getFullDirectoryList());
-    for (const string& entry : list)
+
+    for (const string& filePth : list)
     {
-        cout << entry << endl;
+        cout << filePth;
+
+        // Get the file size
+        struct stat fileStat;
+        if(stat(filePth.c_str(), &fileStat) == 0)
+        {
+            // Display the file size in bytes
+            cout<<"  ("<<fileStat.st_size << " bytes)";
+        }
+        cout<<endl;
+    }
+}
+
+vector<string> FolderMGMT::getFilePathList()
+{
+    vector<string> list = fileMGMT->getFileList(dirMGMT->getFullDirectoryList());
+    vector<string> filePaths; //store the file paths
+
+    for (const string& filePth : list)
+    {
+        filePaths.push_back(filePth);
+    }
+
+    return filePaths;
+}
+
+
+void compressedAllFiles( vector<string> filePaths)
+{
+    size_t commonDirPos = filePaths[0].find_last_of('/');
+    string commonDirectory = filePaths[0].substr(0, commonDirPos);
+    string decompressFolderPath = commonDirectory + "/decompressFolder";
+
+
+    // Read the files using the file paths
+    for (const string& filePath : filePaths)
+    {
+        ifstream file(filePath);
+        if (file.is_open())
+        {
+            cout << "\nContents of " << filePath.substr(commonDirPos+1) << ":" << endl;
+            string line;
+            while (getline(file, line))
+            {
+                cout << line << endl;
+            }
+            file.close();
+        }
+        else
+        {
+            cout << "Unable to open file: " << filePath << endl;
+        }
+    }
+
+
+    if (mkdir(decompressFolderPath.c_str(), 0777) == 0)
+    {
+        cout << "\nCreated folder: " << decompressFolderPath << endl;
+
+        // Create a new file named "newFile.txt" within the "decompressFolder" directory
+        string newFilePath = decompressFolderPath + "/newFile.txt";
+
+        string newFileContent = "This is the content of the new file.";
+        ofstream newFile(newFilePath);
+        if (newFile.is_open())
+        {
+            newFile << newFileContent;
+            newFile.close();
+            cout << "Created file: " << newFilePath << endl;
+        }
+        else
+        {
+            cout << "Failed to create file: " << newFilePath << endl;
+        }
+    }
+    else
+    {
+        cout << "Failed to create folder: " << decompressFolderPath << endl;
     }
 }
 
@@ -290,6 +379,7 @@ int main()
     FolderMGMT* fmgmt = new FolderMGMT;
     fmgmt->initialize();
     cin.get();
+
     delete fmgmt;
     return 0;
 }
