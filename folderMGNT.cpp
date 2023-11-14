@@ -324,7 +324,7 @@ void compressedAllFiles( vector<string> filePaths)
 {
     size_t commonDirPos = filePaths[0].find_last_of('/');
     string commonDirectory = filePaths[0].substr(0, commonDirPos);
-    string decompressFolderPath = commonDirectory + "/decompressFolder";
+    string decompressFolderPath = commonDirectory +  "/decompressFolder";
 
 
     // Read the files using the file paths
