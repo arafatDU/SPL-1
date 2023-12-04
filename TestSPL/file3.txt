@@ -1,0 +1,3 @@
+This is file three.
+This file is the last file of test.
+This file contains three lines.

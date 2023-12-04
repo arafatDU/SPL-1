@@ -228,6 +228,7 @@ void FolderMGMT::initialize()
 
     while (running)
     {
+        cout<<endl<<endl<<endl<<endl<<endl;
         cout << "\n########################################\n"
              << "\t\tFolderMGMT\n\n"
              << "Path:\t\t[" << dirMGMT->getDirPath() << "]" << endl
