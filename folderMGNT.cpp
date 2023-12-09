@@ -193,7 +193,7 @@ vector<string> DirectoryManager::sortOutFiles(vector<string> folderList)
 
 class FolderMGMT
 {
-    private:
+    public:
         DirectoryManager* dirMGMT;
         FileManager* fileMGMT;
 
@@ -202,9 +202,9 @@ class FolderMGMT
         ~FolderMGMT();
 
         //Class-Functions
-        void initialize();
         void outputFolderList();
         void outputFileList();
+        string getDirectoryPath();
         vector<string> getFilePathList();
 };
 
@@ -220,62 +220,7 @@ FolderMGMT::~FolderMGMT()
     delete (fileMGMT);
 }
 
-void FolderMGMT::initialize()
-{
-    int choice = 0;
-    string path = "";
-    bool running = true;
 
-    while (running)
-    {
-        cout<<endl<<endl<<endl<<endl<<endl<<endl;
-        cout << "\n########################################\n"
-             << "\t\tFolderMGMT\n\n"
-             << "Path:\t\t[" << dirMGMT->getDirPath() << "]" << endl
-             << "\n########################################\n"
-             << "1 - change path" << endl
-             << "2 - output folders in path" << endl
-             << "3 - output files in path" << endl
-             << "4 - Compressed all the files" << endl
-             << "9 - exit" << endl;
-
-        cout << "Enter: ";
-        cin >> choice;
-
-        switch (choice)
-        {
-            case 1:
-                cout << "\nPlease enter a path: ";
-                cin >> path;
-                dirMGMT->setDirPath(path);
-                break;
-            case 2:
-                cout << "\nOutput of [" << dirMGMT->getDirPath() << "]" << endl;
-                outputFolderList();
-                cin.get();
-                break;
-            case 3:
-                cout << "\nOutput of [" << dirMGMT->getDirPath() << "]" << endl;
-                outputFileList();
-                cin.get();
-                break;
-            case 4:
-                cout <<"\n---------------------------------------------------"
-                << "\nCompression of [" << dirMGMT->getDirPath() << "]\n" <<
-                "---------------------------------------------------"<< endl;
-                compressedAllFiles(getFilePathList());
-                cin.get();
-                break;
-            case 9:
-                cout << "Exiting FolderMGMT" << endl;
-                running = false;
-                break;
-            default:
-                cout << "wrong entry" << endl;
-                break;
-        }
-    }
-}
 
 void FolderMGMT::outputFolderList()
 {
@@ -375,12 +320,65 @@ void compressedAllFiles( vector<string> filePaths)
     }
 }
 
-int main()
-{
+
+
+int main() {
+    int choice = 0;
+    string path = "";
+    bool running = true;
+
+    // Creating an instance of FolderMGMT
     FolderMGMT* fmgmt = new FolderMGMT;
-    fmgmt->initialize();
-    cin.get();
+
+    while (running) {
+        cout << endl << endl << endl << endl << endl << endl;
+        cout << "\n########################################\n"
+             << "\t\tFolderMGMT\n\n"
+             << "Path:\t\t[" << fmgmt->dirMGMT->getDirPath() << "]" << endl
+             << "\n########################################\n"
+             << "1 - change path" << endl
+             << "2 - output folders in path" << endl
+             << "3 - output files in path" << endl
+             << "4 - Compressed all the files" << endl
+             << "9 - exit" << endl;
+
+        cout << "Enter: ";
+        cin >> choice;
+
+        switch (choice) {
+            case 1:
+                cout << "\nPlease enter a path: ";
+                cin >> path;
+                fmgmt->dirMGMT->setDirPath(path);
+                break;
+            case 2:
+                cout << "\nOutput of [" << fmgmt->dirMGMT->getDirPath() << "]" << endl;
+                fmgmt->outputFolderList();
+                cin.get();
+                break;
+            case 3:
+                cout << "\nOutput of [" << fmgmt->dirMGMT->getDirPath() << "]" << endl;
+                fmgmt->outputFileList();
+                cin.get();
+                break;
+            case 4:
+                cout << "\n---------------------------------------------------"
+                     << "\nCompression of [" << fmgmt->dirMGMT->getDirPath() << "]\n"
+                     << "---------------------------------------------------" << endl;
+                compressedAllFiles(fmgmt->getFilePathList());
+                cin.get();
+                break;
+            case 9:
+                cout << "Exiting FolderMGMT" << endl;
+                running = false;
+                break;
+            default:
+                cout << "wrong entry" << endl;
+                break;
+        }
+    }
 
     delete fmgmt;
+
     return 0;
 }
