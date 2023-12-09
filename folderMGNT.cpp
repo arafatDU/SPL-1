@@ -3,7 +3,23 @@
 #include <sys/stat.h>
 
 using namespace std;
+
 void compressedAllFiles( vector<string> filePaths);
+void write_from_uChar(unsigned char,unsigned char*,int,FILE*);
+void huffcom(string original_file);
+
+
+
+struct ersel{
+    ersel *left,*right;
+    long int number;
+    unsigned char character;
+    string bit;
+};
+
+bool erselcompare0(ersel a,ersel b){
+    return a.number<b.number;
+}
 
 
 class FileManager
@@ -382,3 +398,8 @@ int main() {
 
     return 0;
 }
+
+
+
+
+
