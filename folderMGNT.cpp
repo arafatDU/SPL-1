@@ -6,7 +6,7 @@ using namespace std;
 
 void compressedAllFiles( vector<string> filePaths);
 void write_from_uChar(unsigned char,unsigned char*,int,FILE*);
-void huffcom(string original_file);
+void huffcom(string filePath, string compressFolderPath);
 
 
 
@@ -290,36 +290,21 @@ void compressedAllFiles( vector<string> filePaths)
 
 
     // Read the files using the file paths
-    for (const string& filePath : filePaths)
+
+
+    if (mkdir(decompressFolderPath.c_str(), 0777) == 0)
     {
-        huffcom(filePath);
+        cout << "\nCreated folder: " << decompressFolderPath << endl;
+
+        for (const string& filePath : filePaths)
+        {
+            huffcom(filePath, decompressFolderPath);
+        }
     }
-
-
-    // if (mkdir(decompressFolderPath.c_str(), 0777) == 0)
-    // {
-    //     cout << "\nCreated folder: " << decompressFolderPath << endl;
-
-    //     // Create a new file named "newFile.txt" within the "decompressFolder" directory
-    //     string newFilePath = decompressFolderPath + "/newFile.txt";
-
-    //     string newFileContent = "This is the content of the new file.";
-    //     ofstream newFile(newFilePath);
-    //     if (newFile.is_open())
-    //     {
-    //         newFile << newFileContent;
-    //         newFile.close();
-    //         cout << "Created file: " << newFilePath << endl;
-    //     }
-    //     else
-    //     {
-    //         cout << "Failed to create file: " << newFilePath << endl;
-    //     }
-    // }
-    // else
-    // {
-    //     cout << "Failed to create folder: " << decompressFolderPath << endl;
-    // }
+    else
+    {
+        cout << "Failed to create folder: " << decompressFolderPath << endl;
+    }
 }
 
 
@@ -386,23 +371,27 @@ int main() {
 }
 
 
-void huffcom(string original_file){
+void huffcom(string filePath, string decompressFolderPath){
     long int number[256];
     long int bits=0,total_bits=0;
     int letter_count=0;
-    const char* file_name_cstr = original_file.c_str();
+    const char* file_name_cstr = filePath.c_str();
     
     for(long int *i=number;i<number+256;i++){                       
         *i=0;
     }
     
-    string scompressed;
+    string scompressed, OriginalFileName;
+
+    size_t lastSlashPos = filePath.find_last_of('/');
+    OriginalFileName = filePath.substr(lastSlashPos + 1);
+
     register FILE *original_fp=fopen(file_name_cstr,"rb"),*compressed_fp;
     if(NULL==original_fp){
-        cout<<original_file<<" file does not exist"<<endl;
+        cout<<filePath<<" file does not exist"<<endl;
         return;
     }
-    scompressed=original_file;
+    scompressed= decompressFolderPath + "/" + OriginalFileName;
     scompressed+=".compressed";
 
 
