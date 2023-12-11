@@ -5,6 +5,7 @@
 using namespace std;
 
 void compressedAllFiles( vector<string> filePaths);
+void decompressedAllFiles( vector<string> filePaths);
 void write_from_uChar(unsigned char,unsigned char*,int,FILE*);
 void huffcom(string filePath, string compressFolderPath);
 
@@ -286,7 +287,7 @@ void compressedAllFiles( vector<string> filePaths)
 {
     size_t commonDirPos = filePaths[0].find_last_of('/');
     string commonDirectory = filePaths[0].substr(0, commonDirPos);
-    string decompressFolderPath = commonDirectory +  "/compressFolder";
+    string decompressFolderPath = commonDirectory +  "/comFolder";
 
 
     // Read the files using the file paths
@@ -309,6 +310,40 @@ void compressedAllFiles( vector<string> filePaths)
 
 
 
+void decompressedAllFiles( vector<string> filePaths)
+{
+    size_t commonDirPos = filePaths[0].find_last_of('/');
+    string Directory = filePaths[0].substr(0, commonDirPos);
+    string commonDirectory = filePaths[0].substr(0, Directory.find_last_of('/'));
+    string decompressFolderPath = commonDirectory +  "/compressFolder";
+
+
+    // Read the files using the file paths
+    cout<< "This folder will be created  "<<decompressFolderPath<<endl;
+
+    for(const string& filePath : filePaths)
+    {
+        cout<<filePath<<endl;
+    }
+
+
+    // if (mkdir(decompressFolderPath.c_str(), 0777) == 0)
+    // {
+    //     cout << "\nCreated folder: " << decompressFolderPath << endl;
+
+    //     for (const string& filePath : filePaths)
+    //     {
+    //         huffcom(filePath, decompressFolderPath);
+    //     }
+    // }
+    // else
+    // {
+    //     cout << "Failed to create folder: " << decompressFolderPath << endl;
+    // }
+}
+
+
+
 int main() {
     int choice = 0;
     string path = "";
@@ -327,6 +362,7 @@ int main() {
              << "2 - output folders in path" << endl
              << "3 - output files in path" << endl
              << "4 - Compressed all the files" << endl
+             << "5 - Decompressed all the files" << endl
              << "9 - exit" << endl;
 
         cout << "Enter: ";
@@ -355,6 +391,20 @@ int main() {
                 compressedAllFiles(fmgmt->getFilePathList());
                 cin.get();
                 break;
+            case 5:
+                {string folderName;
+                cout<<"Enter folder name: ";
+                cin>>folderName;
+                string newPath = path + folderName + "/";
+                fmgmt->dirMGMT->setDirPath(newPath);
+
+                cout << "\n---------------------------------------------------"
+                     << "\nDecompression of [" << fmgmt->dirMGMT->getDirPath() << "]\n"
+                     << "---------------------------------------------------" << endl;
+                decompressedAllFiles(fmgmt->getFilePathList());
+                cin.get();
+                fmgmt->dirMGMT->setDirPath(path);
+                break;}
             case 9:
                 cout << "Exiting FolderMGMT" << endl;
                 running = false;
