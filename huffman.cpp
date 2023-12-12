@@ -1,7 +1,4 @@
-#include<bits/stdc++.h>
-#include <dirent.h>
-#include <sys/stat.h>
-
+#include <bits/stdc++.h>
 using namespace std;
 
 unsigned char check=0b10000000;
@@ -11,19 +8,44 @@ struct translation{
     unsigned char character;
 };
 
-
-
-void compressedAllFiles( vector<string> filePaths);
-void decompressedAllFiles( vector<string> filePaths);
-void write_from_uChar(unsigned char,unsigned char*,int,FILE*);
-void huffcom(string filePath, string compressFolderPath);
-
 void str_without_compress(char*);
 unsigned char process_8_bits_NUMBER(unsigned char*,int,FILE*);
 void process_n_bits_TO_STRING(unsigned char*,int,int*,FILE*,translation*,unsigned char);
 void burn_tree(translation*);
-void huffdecom(string compressedfile, string decomFolderPath);
+void huffdecom(string compressedfile);
 
+
+
+void write_from_uChar(unsigned char,unsigned char*,int,FILE*);
+void huffcom(string original_file);
+
+
+
+/*          CONTENT TABLE IN ORDER
+---------PART 1-CALCULATING TRANSLATION INFO----------
+Important Note:4 and 5 are the most important parts of this algorithm
+If you dont know how Huffman's algorithm works I really recommend you to check this link before you continue:
+https://en.wikipedia.org/wiki/Huffman_coding#Basic_technique
+
+1-Size information
+2-Byte count by unique byte and unique byte count
+3-Creating the base of translation array
+4-Creating the whole tree inside the array by weight distribution
+5-adding strings from top to bottom
+
+---------PART 2-CREATION OF COMPRESSED FILE-----------
+    Original File will be compressed in below order
+
+first (8 bytes)         ->  size of the original file
+second (one byte)       ->  letter_count
+third (one byte)        ->  password_length
+fourth (bytes)          ->  password (if password exists)
+fifth (bit groups)
+    5.1 (8 bits)        ->  current character
+    5.2 (8 bits)        ->  length of the transformation
+    5.3 (bits)          ->  transformation code of that character
+sixth (a lot of bits)   ->  transformed version of the original file
+*/
 
 
 struct ersel{
@@ -38,338 +60,37 @@ bool erselcompare0(ersel a,ersel b){
 }
 
 
-class FileManager
-{
-    private:
-        string file;
-        DIR* dirHandle;
-        struct dirent* dirRent;
-
-    public:
-        FileManager();
-        ~FileManager();
-
-        // GET-Methods
-        string getFile();
-
-        // SET-Methods
-        void setFile(string file);
-
-        // Class-Methods
-        bool checkIsFile(string pth);
-        vector<string> ruleOutFolders(vector<string> contentList);
-        vector<string> getFileList(vector<string> contentList);
-};
-
-FileManager::FileManager()
-{
-    file = "./"; // Set a default string for initialization, will change in use
-}
-
-FileManager::~FileManager()
-{
-}
-
-string FileManager::getFile()
-{
-    return file;
-}
-
-void FileManager::setFile(string file)
-{
-    this->file = file;
-}
-
-bool FileManager::checkIsFile(string pth)
-{
-    struct stat fileInfo;
-    if (stat(pth.c_str(), &fileInfo) == 0)
-    {
-        return S_ISREG(fileInfo.st_mode); // It's a regular file
-    }
-    return false; // Not a regular file
-}
-
-vector<string> FileManager::ruleOutFolders(vector<string> contentList)
-{
-    int x = contentList.size();
-    vector<string> ruleOut;
-
-    for (int i = 0; i < x; i++)
-    {
-        if (checkIsFile(contentList.at(i)))
-        {
-            ruleOut.push_back(contentList.at(i));
-        }
-    }
-    return ruleOut; // Output Vector with Files
-}
-
-vector<string> FileManager::getFileList(vector<string> contentList)
-{
-    int x = contentList.size();
-    vector<string> fileList;
-
-    for (int i = 0; i < x; i++)
-    {
-        if (checkIsFile(contentList.at(i)))
-        {
-            fileList.push_back(contentList.at(i));
-        }
-    }
-    return fileList; // Output Vector with Files
-}
-
-class DirectoryManager
-{
-    private:
-        string dirPath;
-        DIR* dirHandle;
-        struct dirent* dirRent;
-
-    public:
-        DirectoryManager();
-        ~DirectoryManager();
-
-        // GET-Methods
-        string getDirPath();
-
-        // SET-Methods
-        void setDirPath(string dirPath);
-
-        // Class-Methods
-        bool checkIsDirectory(string directory);
-        vector<string> getDirectoryList();
-        vector<string> getFullDirectoryList();
-        vector<string> sortOutFiles(vector<string> folderList);
-};
-
-DirectoryManager::DirectoryManager()
-{
-    dirPath = "./"; // set the current folder you are in as default
-}
-
-DirectoryManager::~DirectoryManager()
-{
-}
-
-string DirectoryManager::getDirPath()
-{
-    return dirPath;
-}
-
-void DirectoryManager::setDirPath(string dirPath)
-{
-    this->dirPath = dirPath;
-}
-
-bool DirectoryManager::checkIsDirectory(string directory)
-{
-    struct stat fileInfo;
-    if (stat(directory.c_str(), &fileInfo) == 0)
-    {
-        return S_ISDIR(fileInfo.st_mode); // It's a directory
-    }
-    return false; // Not a directory
-}
-
-vector<string> DirectoryManager::getDirectoryList()
-{
-    vector<string> folderList;
-    dirHandle = opendir(getDirPath().c_str());
-    if (dirHandle)
-    {
-        while ((dirRent = readdir(dirHandle)) != NULL)
-        {
-            string rootPath = getDirPath() + dirRent->d_name;
-            if (checkIsDirectory(rootPath))
-            {
-                folderList.push_back(rootPath);
-            }
-        }
-        closedir(dirHandle); // Close the directory
-    }
-    return folderList;
-}
-
-vector<string> DirectoryManager::getFullDirectoryList()
-{
-    vector<string> folderList;
-    dirHandle = opendir(getDirPath().c_str());
-    if (dirHandle)
-    {
-        while ((dirRent = readdir(dirHandle)) != NULL)
-        {
-            string rootPath = getDirPath() + dirRent->d_name;
-            folderList.push_back(rootPath);
-        }
-        closedir(dirHandle); // Close the directory
-    }
-    return folderList;
-}
-
-vector<string> DirectoryManager::sortOutFiles(vector<string> folderList)
-{
-    int x = folderList.size();
-    vector<string> ruleOut;
-
-    for (int i = 0; i < x; i++)
-    {
-        if (checkIsDirectory(folderList.at(i)))
-        {
-            ruleOut.push_back(folderList.at(i));
-        }
-    }
-    return ruleOut; // Output Vector without Files
-}
-
-class FolderMGMT
-{
-    public:
-        DirectoryManager* dirMGMT;
-        FileManager* fileMGMT;
-
-    public:
-        FolderMGMT();
-        ~FolderMGMT();
-
-        //Class-Functions
-        void outputFolderList();
-        void outputFileList();
-        string getDirectoryPath();
-        vector<string> getFilePathList();
-};
-
-FolderMGMT::FolderMGMT()
-{
-    dirMGMT = new DirectoryManager;
-    fileMGMT = new FileManager;
-}
-
-FolderMGMT::~FolderMGMT()
-{
-    delete (dirMGMT);
-    delete (fileMGMT);
-}
 
 
+/*          CONTENT TABLE IN ORDER
+    compressed file's composition is in order below
+    that is why we re going to translate it part by part
 
-void FolderMGMT::outputFolderList()
-{
-    cout << "Here is all folders:" << endl;
-    vector<string> list = dirMGMT->getDirectoryList();
-    for (const string& entry : list)
-    {
-        cout << entry << endl;
-    }
-}
-
-void FolderMGMT::outputFileList()
-{
-    cout << "Here is all files:" << endl;
-    vector<string> list = fileMGMT->getFileList(dirMGMT->getFullDirectoryList());
-
-    for (const string& filePth : list)
-    {
-        cout << filePth;
-
-        // Get the file size
-        struct stat fileStat;
-        if(stat(filePth.c_str(), &fileStat) == 0)
-        {
-            // Display the file size in bytes
-            cout<<"  ("<<fileStat.st_size << " bytes)";
-        }
-        cout<<endl;
-    }
-}
-
-vector<string> FolderMGMT::getFilePathList()
-{
-    vector<string> list = fileMGMT->getFileList(dirMGMT->getFullDirectoryList());
-    vector<string> filePaths; //store the file paths
-
-    for (const string& filePth : list)
-    {
-        filePaths.push_back(filePth);
-    }
-
-    return filePaths;
-}
+.first (8 bytes)         ->  size of the original file
+.second (one byte)       ->  letter_count
+.third (one byte)        ->  password_length
+.fourth (bytes)          ->  password (if password exists)
+.fifth (bit groups)
+    5.1 (8 bits)        ->  current character
+    5.2 (8 bits)        ->  length of the transformation
+    5.3 (bits)          ->  transformation code of that character
+.sixth (a lot of bits)   ->  transformed version of the original file
+*/
 
 
-void compressedAllFiles( vector<string> filePaths)
-{
-    size_t commonDirPos = filePaths[0].find_last_of('/');
-    string commonDirectory = filePaths[0].substr(0, commonDirPos);
-    string decompressFolderPath = commonDirectory +  "/comFolder";
-
-
-    // Read the files using the file paths
-
-
-    if (mkdir(decompressFolderPath.c_str(), 0777) == 0)
-    {
-        cout << "\nCreated folder: " << decompressFolderPath << endl;
-
-        for (const string& filePath : filePaths)
-        {
-            huffcom(filePath, decompressFolderPath);
-        }
-    }
-    else
-    {
-        cout << "Failed to create folder: " << decompressFolderPath << endl;
-    }
-}
-
-
-
-void decompressedAllFiles( vector<string> filePaths)
-{
-    size_t commonDirPos = filePaths[0].find_last_of('/');
-    string Directory = filePaths[0].substr(0, commonDirPos);
-    string commonDirectory = filePaths[0].substr(0, Directory.find_last_of('/'));
-    string decompressFolderPath = commonDirectory +  "/decomFolder";
-
-
-
-    if (mkdir(decompressFolderPath.c_str(), 0777) == 0)
-    {
-        cout << "\nCreated folder: " << decompressFolderPath << endl;
-
-        for (const string& filePath : filePaths)
-        {
-            huffdecom(filePath, decompressFolderPath);
-        }
-    }
-    else
-    {
-        cout << "Failed to create folder: " << decompressFolderPath << endl;
-    }
-}
-
-
-
-int main() {
-    int choice = 0;
-    string path = "";
+int main(){
+    string compressedfile;
+    string decompressfile;
     bool running = true;
-
-    // Creating an instance of FolderMGMT
-    FolderMGMT* fmgmt = new FolderMGMT;
-
+    int choice;
+    
     while (running) {
         cout << endl << endl << endl << endl << endl << endl;
         cout << "\n########################################\n"
-             << "\t\tFolderMGMT\n\n"
-             << "Path:\t\t[" << fmgmt->dirMGMT->getDirPath() << "]" << endl
+             << "\t\tHuffman Compressor\n"
              << "\n########################################\n"
-             << "1 - change path" << endl
-             << "2 - output folders in path" << endl
-             << "3 - output files in path" << endl
-             << "4 - Compressed all the files" << endl
-             << "5 - Decompressed all the files" << endl
+             << "1 - compress" << endl
+             << "2 - decompress" << endl
              << "9 - exit" << endl;
 
         cout << "Enter: ";
@@ -377,43 +98,17 @@ int main() {
 
         switch (choice) {
             case 1:
-                cout << "\nPlease enter a path: ";
-                cin >> path;
-                fmgmt->dirMGMT->setDirPath(path);
+                cout << "\nEnter file path: ";
+                cin >> compressedfile;
+                huffcom(compressedfile);
                 break;
             case 2:
-                cout << "\nOutput of [" << fmgmt->dirMGMT->getDirPath() << "]" << endl;
-                fmgmt->outputFolderList();
-                cin.get();
+                cout << "\nEnter file path: ";
+                cin>> decompressfile;
+                huffdecom(decompressfile);
                 break;
-            case 3:
-                cout << "\nOutput of [" << fmgmt->dirMGMT->getDirPath() << "]" << endl;
-                fmgmt->outputFileList();
-                cin.get();
-                break;
-            case 4:
-                cout << "\n---------------------------------------------------"
-                     << "\nCompression of [" << fmgmt->dirMGMT->getDirPath() << "]\n"
-                     << "---------------------------------------------------" << endl;
-                compressedAllFiles(fmgmt->getFilePathList());
-                cin.get();
-                break;
-            case 5:
-                {string folderName;
-                cout<<"Enter folder name: ";
-                cin>>folderName;
-                string newPath = path + folderName + "/";
-                fmgmt->dirMGMT->setDirPath(newPath);
-
-                cout << "\n---------------------------------------------------"
-                     << "\nDecompression of [" << fmgmt->dirMGMT->getDirPath() << "]\n"
-                     << "---------------------------------------------------" << endl;
-                decompressedAllFiles(fmgmt->getFilePathList());
-                cin.get();
-                fmgmt->dirMGMT->setDirPath(path);
-                break;}
             case 9:
-                cout << "Exiting FolderMGMT" << endl;
+                cout << "Exiting" << endl;
                 running = false;
                 break;
             default:
@@ -422,33 +117,31 @@ int main() {
         }
     }
 
-    delete fmgmt;
 
     return 0;
+
 }
 
 
-void huffcom(string filePath, string decompressFolderPath){
+
+
+void huffcom(string original_file){
     long int number[256];
     long int bits=0,total_bits=0;
     int letter_count=0;
-    const char* file_name_cstr = filePath.c_str();
+    const char* file_name_cstr = original_file.c_str();
     
     for(long int *i=number;i<number+256;i++){                       
         *i=0;
     }
     
-    string scompressed, OriginalFileName;
-
-    size_t lastSlashPos = filePath.find_last_of('/');
-    OriginalFileName = filePath.substr(lastSlashPos + 1);
-
+    string scompressed;
     register FILE *original_fp=fopen(file_name_cstr,"rb"),*compressed_fp;
     if(NULL==original_fp){
-        cout<<filePath<<" file does not exist"<<endl;
+        cout<<original_file<<" file does not exist"<<endl;
         return;
     }
-    scompressed= decompressFolderPath + "/" + OriginalFileName;
+    scompressed=original_file;
     scompressed+=".compressed";
 
 
@@ -457,6 +150,10 @@ void huffcom(string filePath, string decompressFolderPath){
     fseek(original_fp,0,SEEK_END);
     long int size=ftell(original_fp);
     rewind(original_fp);
+        // size information will later be written to compressed file
+    //---------------------------------------------
+
+
 
     //--------------------2------------------------
     register unsigned char x;
@@ -475,6 +172,9 @@ void huffcom(string filePath, string decompressFolderPath){
         // This code block counts number of times that all of the unique bytes is used on the first block
         // and stores that info in 'number' array
         // after that it checks the 'number' array and writes the number of unique byte count to 'letter_count' variable
+    //---------------------------------------------
+
+
 
     //--------------------3------------------------
     ersel array[letter_count*2-1];
@@ -488,9 +188,18 @@ void huffcom(string filePath, string decompressFolderPath){
                 e++;
             }
     }
-    sort(array,array+letter_count,erselcompare0);             
+    sort(array,array+letter_count,erselcompare0);
+        // creating the base of translation array(and then sorting them by ascending numbers)
+        //     this array of type 'ersel' will not be used after calculating transformed versions of every unique byte
+        //     instead its info will be written in a new string array called str_arr 
+    //---------------------------------------------
     
-    //-------------------4------------------------- min1 and min2 represents nodes that has minimum weights
+                   
+    
+    //-------------------4-------------------------
+        // min1 and min2 represents nodes that has minimum weights
+        // isleaf is the pointer that traverses through leafs and
+        // notleaf is the pointer that traverses through nodes that are not leafs
     ersel *min1=array,*min2=array+1,*current=array+letter_count,*notleaf=array+letter_count,*isleaf=array+2;            
     for(int i=0;i<letter_count-1;i++){                           
         current->number=min1->number+min2->number;
@@ -535,6 +244,11 @@ void huffcom(string filePath, string decompressFolderPath){
         }
         
     }
+        // At every cycle, 2 of the least weighted nodes will be chosen to
+        // create a new node that has weight equal to sum of their weights combined.
+            // After we are done with these nodes they will become childrens of created nodes
+            // and they will be passed so that they wont be used in this process again.
+    //---------------------------------------------
     
     //-------------------5-------------------------
     for(e=array+letter_count*2-2;e>array-1;e--){
@@ -546,6 +260,13 @@ void huffcom(string filePath, string decompressFolderPath){
         }
         
     }
+        // In this block we are adding the bytes from root to leafs
+        // and after this is done every leaf will have a transformation string that corresponds to it
+            // Note: It is actually a very neat process. Using 4th and 5th code blocks, we are making sure that
+            // the most used character is using least number of bits.
+                // Specific number of bits we re going to use for that character is determined by weight distribution
+    //---------------------------------------------
+
 
     compressed_fp=fopen(&scompressed[0],"wb");
 
@@ -560,6 +281,9 @@ void huffcom(string filePath, string decompressFolderPath){
         }
         total_bits+=64;
     }
+        //This code block is writing byte count of the original file to compressed file's first 8 bytes
+            //It is done like this to make sure that it can work on little, big or middle-endian systems
+    //----------------------------------------
 
     //-----------writes second----------------
     fwrite(&letter_count,1,1,compressed_fp);
@@ -619,7 +343,10 @@ void huffcom(string filePath, string decompressFolderPath){
         write_from_uChar(current_character,&current_byte,current_bit_count,compressed_fp);
         write_from_uChar(len,&current_byte,current_bit_count,compressed_fp);
         total_bits+=len+16;
-
+        // above lines will write the byte and the number of bits
+        // we re going to need to represent this specific byte's transformated version
+        // after here we are going to write the transformed version of the number bit by bit.
+        
         str_pointer=&e->bit[0];
         while(*str_pointer){
             if(current_bit_count==8){
@@ -663,7 +390,7 @@ void huffcom(string filePath, string decompressFolderPath){
         <<"If you want to continue write any other number and press enter"<<endl;
     int check;
     //cin>>check;
-    check = 1;
+    check = 5;
     if(!check){
         cout<<endl<<"Process has been aborted"<<endl;
         fclose(compressed_fp);
@@ -694,6 +421,7 @@ void huffcom(string filePath, string decompressFolderPath){
         }
         fread(&x,1,1,original_fp);
     }
+    // Above code writes bytes that are translated from original file to the compressed file.
     
     if(current_bit_count==8){
         fwrite(&current_byte,1,1,compressed_fp);
@@ -702,13 +430,16 @@ void huffcom(string filePath, string decompressFolderPath){
         current_byte<<=8-current_bit_count;
         fwrite(&current_byte,1,1,compressed_fp);
     }
-    
+    //----------------------------------------
+
     fclose(compressed_fp);
     fclose(original_fp);
 
     cout<<"Compression is complete"<<endl;   
 }
-
+//below function is used for writing the uChar to fp_write file
+    //It does not write it directly as one byte instead it mixes uChar and currnt byte writes 8 bits of it 
+    //and puts the rest to curent byte for later use
 void write_from_uChar(unsigned char uChar,unsigned char *current_byte,int current_bit_count,FILE *fp_write){
     (*current_byte)<<=8-current_bit_count;
     (*current_byte)|=(uChar>>current_bit_count);
@@ -718,58 +449,34 @@ void write_from_uChar(unsigned char uChar,unsigned char *current_byte,int curren
 
 
 
-void huffdecom(string compressedfile, string decomFolderPath){
+
+void huffdecom(string compressedfile){
+
+    try{
     int letter_count,password_length;
     register FILE *fp_compressed,*fp_new;
-    char newfile[260]="New-";
-    char newfilePath[360];
-    char* file_name_str = new char[compressedfile.length() + 1];
-    strcpy(file_name_str, compressedfile.c_str());
+    // char newfile[260]="New-";
+    // char* file_name_str = new char[compressedfile.length() + 1];
+    // strcpy(file_name_str, compressedfile.c_str());
 
-    
+    string newfile;
+    string filename=compressedfile;
+    string commonpath = "";
+    if(compressedfile.find('/') != std::string::npos){
+        size_t lastSlash = filename.find_last_of('/');
+        commonpath = filename.substr(0, lastSlash+1);
+        filename = filename.substr(lastSlash+1);
+    }
 
-
-    size_t lastSlash = compressedfile.find_last_of('/');
-    //string commonPath = compressedfile.substr(0, lastSlash+1);
-    //cout<<commonPath<<endl;
-    string filename = compressedfile.substr(lastSlash+1);
-    
+    cout<<filename<<endl;
     size_t lastDot = filename.find_last_of('.');
-    filename = filename.substr(0, lastDot);
-    //cout<<filename<<endl;
-    decomFolderPath = decomFolderPath + "/" + filename;
-    strcpy(newfile+4,filename.c_str());
-    strcpy(newfilePath, decomFolderPath.c_str());
+    newfile = commonpath + "New-" + filename.substr(0, lastDot);
+    cout<<"Output filepath:XXX"<<newfile<<"XXX"<<endl;
     
-    //cout<<newfilePath<<endl;
-
-    ifstream compressedFile(compressedfile, ios::binary);
-    if (!compressedFile) {
-        cerr << "Error: Unable to open the compressed file." << endl;
-        return;
-    }
-    cout<<"Successfully open"<<endl;
-
-
-
-    ofstream newFile(decomFolderPath, ios::binary);
-    if (!newFile) {
-        cerr << "Error: Unable to create the new file." << endl;
-        return;
-    }
-    cout<<"Successfully created file"<<endl;
-    return;
 
 
     
-
-    fp_compressed=fopen(file_name_str,"rb");
-    
-    if (!fp_compressed) {
-        printf("%s does not exist\n", file_name_str);
-        return;
-    }
-
+    fp_compressed=fopen(compressedfile.c_str(),"rb");
     if(!fp_compressed){
         cout<<compressedfile<<" does not exist"<<endl;
         return;
@@ -792,21 +499,20 @@ void huffdecom(string compressedfile, string decomFolderPath){
         // to the most significiant byte to make sure system's endianness
         // does not affect the process and that is why we are processing size information like this
     //-------------------------------
-    
 
 
-    //str_without_compress(file_name_str);
-    //strcpy(newfile+4,filename.c_str());
+
+    // str_without_compress(compressedfile.c_str());
+    // strcpy(newfile+4,compressedfile.c_str());
     //---------reads .second-----------
     fread(&letter_count,1,1,fp_compressed);
     if(letter_count==0)letter_count=256;
     //-------------------------------
 
 
-    
+
     //------------reads .third and .fourth--------------------
     fread(&password_length,1,1,fp_compressed);
-    password_length = 0;
     if(password_length){
         char real_password[password_length+1],password_input[257];
         fread(real_password,1,password_length,fp_compressed);
@@ -831,7 +537,7 @@ void huffdecom(string compressedfile, string decomFolderPath){
         // this code block reads and checks the password
     //----------------------------------------------------
 
-    
+
 
     //----------------reads .fifth----------------------
         // and stores transformation info into translation tree for later use
@@ -848,18 +554,17 @@ void huffdecom(string compressedfile, string decomFolderPath){
     //--------------------------------------------------
 
 
-    
+
     //----------------reads .sixth----------------------
         // Translates .sixth from info that is stored in translation tree
         // than writes it to new file
+    fp_new=fopen(newfile.c_str(),"wb");
+    if(!fp_new){
+        cout<<"Can't create file"<<endl;
+    }
 
-    cout<<"Writing file path"<<newfilePath<<endl;
-    
-    fp_new=fopen(newfilePath,"wb");
-    
+
     translation *node;
-
-    
 
     for(long int i=0;i<size;i++){
         node=root;
@@ -882,6 +587,12 @@ void huffdecom(string compressedfile, string decomFolderPath){
     //--------------------------------------------------
 
     burn_tree(root);
+
+
+    }
+    catch(exception &ex){
+        cout<<ex.what()<<endl;
+    }
     cout<<"Decompression is complete"<<endl;
 }
 
