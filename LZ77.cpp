@@ -104,9 +104,9 @@ Llist *HashTable::SearchTable(const char *buff, int p)
 }
 
 // Forward declaraction of main functions
-void Compress(const char *buff, const int size, const string &fn);
+void Compress( const string &fn, const string &outputfolder);
 int find_match(HashTable *hash, const char *buff, int &winstart, int &current, const int size);
-void Decompress(const char *memblock, const int size, const std::string &filename);
+void Decompress( const std::string &filename, const std::string &outputfolder);
 
 class BitBuffer
 {
@@ -263,84 +263,43 @@ int main()
     try
     {
         string filename;
+        string outputFolder;
         string mode;
 
-        // mode = "compress";
-        // filename = "testfile.txt";
         cout << "Enter file name: ";
         cin >> filename;
+        cout << "Enter outputfolder name: ";
+        cin >> outputFolder;
         cout << "Enter Mode: ";
         cin >> mode;
 
-        int size;
-        unique_ptr<char> data;
-        ifstream fin(filename, ios::in | ios::binary | ios::ate);
-        if (fin.is_open())
-        {
-            size = fin.tellg();
-            data = unique_ptr<char>(new char[size]);
-            fin.seekg(0, ios::beg);
-            fin.read(data.get(), size);
-            fin.close();
-        }
-        else
-        {
-            throw runtime_error("Could not open input file '" + filename + "'");
-        }
+        
 
         if (mode.compare("compress") == 0)
         {
-            // Send message to user of the mode we chose
             cout << "Compressing '" + filename + "'" << endl;
-            Compress(data.get(), size, filename);
+            Compress( filename, outputFolder);
         }
         else if (mode.compare("decompress") == 0)
         {
-            // Send message to user of the mode we chose
-            std::cout << "Decompressing '" + filename + "'" << std::endl;
-            Decompress(data.get(), size, filename);
+            cout << "Decompressing '" + filename + "'" << endl;
+            Decompress( filename, outputFolder);
         }
         else
         {
-            std::cout << "Mode '" + mode + "' is not valid, expected 'compress' or 'decompress'" << std::endl;
+            cout << "Mode '" + mode + "' is not valid, expected 'compress' or 'decompress'" << endl;
         }
     }
-    catch (std::exception &ex)
+    catch (exception &ex)
     {
-        std::cout << ex.what() << std::endl;
+        cout << ex.what() << endl;
     }
 
     return 0;
 }
 
-void Compress(const char *memblock, const int size, const string &fn)
-{
-    const string filename = fn + ".comp";
-    int winstart = 0;
-    int current = 0;
-    int temp;
-    int check;
-    BitBuffer bits(filename);
-    HashTable hash;
-    int i = 0;
-    while (i < size)
-    {
-        temp = current;
-        check = find_match(&hash, memblock, winstart, current, size);
-        if (check >= 0)
-        {
-            bits.addOne();
-            bits.addBytes(check, current - temp - 4);
-            i += current - temp;
-        }
-        else
-        {
-            bits.addZero();
-            bits.addByte(memblock[current - 1]);
-            i++;
-        }
-    }
-}
+
+
 
 int find_match(HashTable *hash, const char *buff, int &winstart, int &current, const int size)
 {
@@ -418,8 +377,87 @@ int find_match(HashTable *hash, const char *buff, int &winstart, int &current, c
     }
 }
 
-void Decompress(const char *memblock, const int size, const std::string &filename)
+void Compress( const string &fn, const string &outputfolder)
 {
+    int size;
+        unique_ptr<char> data;
+        ifstream fin(fn, ios::in | ios::binary | ios::ate);
+        if (fin.is_open())
+        {
+            size = fin.tellg();
+            data = unique_ptr<char>(new char[size]);
+            fin.seekg(0, ios::beg);
+            fin.read(data.get(), size);
+            fin.close();
+        }
+        else
+        {
+            cout<<"Can't copen file: "<<fn<<endl;
+        }
+
+    const char *memblock = data.get();
+
+
+    size_t lastSlash = fn.find_last_of('/');
+    string name = fn.substr(lastSlash+1);
+
+
+    const string filename = outputfolder + "/" + name + ".lzss";
+    int winstart = 0;
+    int current = 0;
+    int temp;
+    int check;
+    BitBuffer bits(filename);
+    HashTable hash;
+    int i = 0;
+
+    while (i < size)
+    {
+        temp = current;
+        check = find_match(&hash, memblock, winstart, current, size);
+
+        if (check >= 0)
+        {
+            bits.addOne();
+            bits.addBytes(check, current - temp - 4);
+            i += current - temp;
+        }
+        else
+        {
+            bits.addZero();
+            bits.addByte(static_cast<unsigned char>(memblock[current - 1]));
+            i++;
+        }
+    }
+
+
+    //int csize = bits.getCompressedSize();
+    //cout<<"Size: "<<size<<"  Csize: "<<csize<< "    Ratio:"<<(double)csize/size<<endl;
+}
+
+
+void Decompress( const std::string &filename, const std::string &outputfolder)
+{
+    int size;
+        unique_ptr<char> data;
+        ifstream fin(filename, ios::in | ios::binary | ios::ate);
+        if (fin.is_open())
+        {
+            size = fin.tellg();
+            data = unique_ptr<char>(new char[size]);
+            fin.seekg(0, ios::beg);
+            fin.read(data.get(), size);
+            fin.close();
+        }
+        else
+        {
+            cout<<"Can't copen file: "<<filename<<endl;
+        }
+    
+    const char *memblock = data.get();
+
+
+
     char buff[DECOMP_BUFF_SIZE];
     int len = 0;
     int beg = 0;
@@ -428,21 +466,29 @@ void Decompress(const char *memblock, const int size, const std::string &filenam
     int cacheend = 0;
 
     // Open output file
-    const std::string decomp_file = filename + ".decomp";
+    size_t lastSlash = filename.find_last_of('/');
+    //string common = filename.substr(0, lastSlash+1);
+    string name = filename.substr(lastSlash+1);
+
+    size_t lastDot = name.find_last_of('.');
+    
+    const std::string decomp_file = outputfolder + "/New-lz-" + name.substr(0, lastDot);
     std::ofstream fout(decomp_file, std::ios::out | std::ios::binary);
+
     for (int i = 0; i < size; i++)
     {
         char temp;
         temp = memblock[i];
+
         for (int j = 7; j >= 0; j--)
         {
             if (temp & 1)
             {
-                buff[end + j] = 49;
+                buff[end + j] = '1';
             }
             else
             {
-                buff[end + j] = 48;
+                buff[end + j] = '0';
             }
 
             temp >>= 1;
@@ -464,7 +510,7 @@ void Decompress(const char *memblock, const int size, const std::string &filenam
         {
             while (len > 16)
             {
-                if (buff[beg] == 48 && len >= 9)
+                if (buff[beg] == '0' && len >= 9)
                 {
                     beg++;
                     if (beg == DECOMP_BUFF_SIZE)
@@ -475,7 +521,7 @@ void Decompress(const char *memblock, const int size, const std::string &filenam
                     char byte = 0;
                     for (int j = 0; j < 8; j++)
                     {
-                        if (buff[beg] == 48)
+                        if (buff[beg] == '0')
                         {
                             byte = byte | 0;
                         }
@@ -510,7 +556,7 @@ void Decompress(const char *memblock, const int size, const std::string &filenam
 
                     len -= 9;
                 }
-                else if (buff[beg] == 49 && len >= 18)
+                else if (buff[beg] == '1' && len >= 18)
                 {
                     beg++;
                     if (beg == DECOMP_BUFF_SIZE)
@@ -521,7 +567,7 @@ void Decompress(const char *memblock, const int size, const std::string &filenam
                     int location = 0;
                     for (int j = 0; j < 12; j++)
                     {
-                        if (buff[beg] == 48)
+                        if (buff[beg] == '0')
                         {
                             location = location | 0;
                         }
@@ -545,7 +591,7 @@ void Decompress(const char *memblock, const int size, const std::string &filenam
                     int length = 0;
                     for (int j = 0; j < 5; j++)
                     {
-                        if (buff[beg] == 48)
+                        if (buff[beg] == '0')
                         {
                             length = length | 0;
                         }
@@ -570,6 +616,7 @@ void Decompress(const char *memblock, const int size, const std::string &filenam
                     length += 4;
                     len -= 18;
                     char byte = 0;
+
                     for (int j = 0; j < length; j++)
                     {
                         int tem = cacheend - location;
