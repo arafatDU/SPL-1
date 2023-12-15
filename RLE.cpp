@@ -461,6 +461,7 @@ int main()
     cin>>inpPath;
     cout<<"Enter output folderpath: ";
     cin>>outFolder;
+    int choice;
 
     // std::shared_ptr<std::vector<char>> inpData = FileAccessor::GetSymbVectPtr(inpPath);
 	// if (!inpData) return -1;
@@ -485,14 +486,19 @@ int main()
     // }
     // cout << endl;
 
+    cout<<"1. Compress"<<"\t"<<" 2. Decompress"<<endl<<"Enter: ";
+    cin>>choice;
+
+    if(choice == 1){
+        rleCompress(inpPath, outFolder);
+    }else if(choice == 2){
+        rleDecompress(inpPath, outFolder);
+    }else{
+        cout<<"Invalid Choice."<<endl;
+        return 0;
+    }
 
 
-
-
-
-	//cout<< "CR: " << FileAccessor::GetFileSize(inpPath) <<endl;
-    //rleCompress(inpPath, outFolder);
-    rleDecompress(inpPath, outFolder);
 
 
 
