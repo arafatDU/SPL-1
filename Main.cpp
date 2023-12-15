@@ -4,30 +4,22 @@
 
 using namespace std;
 
+
+void compressedAllFiles( vector<string> filePaths);
+void decompressedAllFiles( vector<string> filePaths);
+void huffCompression(string inpPath, string folderPath);
+void huffDecompression(string inpPath, string folderPath);
+void bwtCompress(string inpPath, string folderPath);
+void bwtDecompress(string inpPath, string folderPath);
+
+
+
 unsigned char check=0b10000000;
 
 struct translation{
     translation *zero=NULL,*one=NULL;
     unsigned char character;
 };
-
-
-
-void compressedAllFiles( vector<string> filePaths);
-void decompressedAllFiles( vector<string> filePaths);
-void huffCompression(string inpPath, string folderPath);
-void huffDecompression(string inpPath, string folderPath);
-
-void write_from_uChar(unsigned char,unsigned char*,int,FILE*);
-void huffcom(string filePath, string compressFolderPath);
-
-void str_without_compress(char*);
-unsigned char process_8_bits_NUMBER(unsigned char*,int,FILE*);
-void process_n_bits_TO_STRING(unsigned char*,int,int*,FILE*,translation*,unsigned char);
-void burn_tree(translation*);
-void huffdecom(string compressedfile, string decomFolderPath);
-
-
 
 struct ersel{
     ersel *left,*right;
@@ -39,6 +31,16 @@ struct ersel{
 bool erselcompare0(ersel a,ersel b){
     return a.number<b.number;
 }
+
+
+void write_from_uChar(unsigned char,unsigned char*,int,FILE*);
+void huffcom(string filePath, string compressFolderPath);
+
+void str_without_compress(char*);
+unsigned char process_8_bits_NUMBER(unsigned char*,int,FILE*);
+void process_n_bits_TO_STRING(unsigned char*,int,int*,FILE*,translation*,unsigned char);
+void burn_tree(translation*);
+void huffdecom(string compressedfile, string decomFolderPath);
 
 
 
@@ -1103,51 +1105,35 @@ vector<string> FolderMGMT::getFilePathList()
 
 
 
-void bwtCompress(string inpPath, string folderPath)
+
+void compressFolderUsingBWT( vector<string> filePaths)
 {
-    std::shared_ptr<std::vector<char>> inpData = FileAccessor::GetSymbVectPtr(inpPath);
-	if (!inpData) return;
-	std::shared_ptr<std::vector<char>> BWTData;
+    size_t commonDirPos = filePaths[0].find_last_of('/');
+    string commonDirectory = filePaths[0].substr(0, commonDirPos);
+    string decompressFolderPath = commonDirectory +  "/bwtComFolder";
 
 
-	BWTData = BWT::encode(inpData);
+    if (mkdir(decompressFolderPath.c_str(), 0777) == 0)
+    {
+        cout << "\nCreated folder: " << decompressFolderPath << endl;
 
-
-
-    size_t lastSlash = inpPath.find_last_of('/');
-    string rawName = inpPath.substr(lastSlash+1);
-    string outPath = folderPath + "/" + rawName + ".bwt";
-
-    Huffman::encode(BWTData, outPath);
-
+        for (const string& filePath : filePaths)
+        {
+            bwtCompress(filePath, decompressFolderPath);      
+        }
+    }
+    else
+    {
+        cout << "Failed to create folder: " << decompressFolderPath << endl;
+    }
 }
-void bwtDecompress(string inpPath, string folderPath)
-{
-	cout<<"Huffman encode continue..."<<endl;
-	std::shared_ptr<std::vector<char>> Data = Huffman::decode(inpPath);
 
-	cout<<"BWT continue..."<<endl;
-    std::shared_ptr<std::vector<char>> outData = BWT::decode(Data);
-
-    size_t lastSlash = inpPath.find_last_of('/');
-    string rawName = inpPath.substr(lastSlash+1);
-    size_t lastDot = rawName.find_last_of('.');
-    string name = rawName.substr(0, lastDot);
-    string outPath = folderPath + "/New-b-" + name;
-
-	cout<<"Writting to folder..."<<endl;
-    FileAccessor::WriteSymbVectToFile(outData, outPath);
-
-}
 
 void compressFolderUsingLZ77( vector<string> filePaths)
 {
     size_t commonDirPos = filePaths[0].find_last_of('/');
     string commonDirectory = filePaths[0].substr(0, commonDirPos);
     string decompressFolderPath = commonDirectory +  "/lzComFolder";
-
-
-    // Read the files using the file paths
 
 
     if (mkdir(decompressFolderPath.c_str(), 0777) == 0)
@@ -1172,9 +1158,6 @@ void compressFolderUsingHuffman( vector<string> filePaths)
     size_t commonDirPos = filePaths[0].find_last_of('/');
     string commonDirectory = filePaths[0].substr(0, commonDirPos);
     string decompressFolderPath = commonDirectory +  "/huffComFolder";
-
-
-    // Read the files using the file paths
 
 
     if (mkdir(decompressFolderPath.c_str(), 0777) == 0)
@@ -1290,7 +1273,11 @@ void compressedAllFiles( vector<string> filePaths)
                 compareFile<<"Original File Size: "<<size<<" Bytes"<<endl;
                 compareFile<<"Huffman Compressed File Size: "<<hsize<<" Bytes"<<endl;
                 compareFile<<"LZ77 Compressed File Size: "<<lsize<<" Bytes"<<endl;
-                compareFile<<"BWT Compressed File Size: "<<bsize<<" Bytes"<<endl<<endl<<endl;
+                compareFile<<"BWT Compressed File Size: "<<bsize<<" Bytes"<<endl<<endl;
+                compareFile<<"Compression Ratio:-"<<endl;
+                compareFile<<"Huffman Coding Algorithm = "<<100*(float)hsize/size<<endl;
+                compareFile<<"LZ77 Algorithm = "<<100*(float)lsize/size<<endl;
+                compareFile<<"BWT Algorithm = "<<100*(float)bsize/size<<endl<<endl<<endl<<endl;
             } else {
                 std::cerr << "Error: Could not open the file for writing." << std::endl;
             }
@@ -1415,6 +1402,13 @@ int main() {
                 cin.get();
                 break;
             case 7:
+                cout << "\n---------------------------------------------------"
+                     << "\nCompression of [" << fmgmt->dirMGMT->getDirPath() << "]\n"
+                     << "---------------------------------------------------" << endl;
+                compressFolderUsingBWT(fmgmt->getFilePathList());
+                cin.get();
+                break;
+            case 8:
                 {string folderName;
                 cout<<"Enter folder name: ";
                 cin>>folderName;
@@ -1461,6 +1455,7 @@ void huffCompression(string inpPath, string folderPath)
     Huffman::encode(inpData, outPath);
 
 }
+
 void huffDecompression(string inpPath, string folderPath)
 {
     std::shared_ptr<std::vector<char>> outData = Huffman::decode(inpPath);
@@ -1474,6 +1469,51 @@ void huffDecompression(string inpPath, string folderPath)
     FileAccessor::WriteSymbVectToFile(outData, outPath);
 
 }
+
+
+
+
+void bwtCompress(string inpPath, string folderPath)
+{
+    std::shared_ptr<std::vector<char>> inpData = FileAccessor::GetSymbVectPtr(inpPath);
+	if (!inpData) return;
+	std::shared_ptr<std::vector<char>> BWTData;
+
+
+	BWTData = BWT::encode(inpData);
+
+
+
+    size_t lastSlash = inpPath.find_last_of('/');
+    string rawName = inpPath.substr(lastSlash+1);
+    string outPath = folderPath + "/" + rawName + ".bwt";
+
+    Huffman::encode(BWTData, outPath);
+
+}
+
+void bwtDecompress(string inpPath, string folderPath)
+{
+	cout<<"Huffman encode continue..."<<endl;
+	std::shared_ptr<std::vector<char>> Data = Huffman::decode(inpPath);
+
+	cout<<"BWT continue..."<<endl;
+    std::shared_ptr<std::vector<char>> outData = BWT::decode(Data);
+
+    size_t lastSlash = inpPath.find_last_of('/');
+    string rawName = inpPath.substr(lastSlash+1);
+    size_t lastDot = rawName.find_last_of('.');
+    string name = rawName.substr(0, lastDot);
+    string outPath = folderPath + "/New-b-" + name;
+
+	cout<<"Writting to folder..."<<endl;
+    FileAccessor::WriteSymbVectToFile(outData, outPath);
+
+}
+
+
+
+
 
 
 void huffcom(string filePath, string decompressFolderPath){
