@@ -351,6 +351,7 @@ std::shared_ptr<std::vector<char> > Huffman::decode(const std::string & path) {
 	{
 		fin.close();
 		//error
+		return nullptr;
 	}
 }
 
@@ -544,6 +545,22 @@ void huffcom(string inpPath, string folderPath)
     Huffman::encode(inpData, outPath);
 
 }
+
+// int  getHuffComR(string inpPath, string folderPath)
+// {
+//     std::shared_ptr<std::vector<char>> inpData = FileAccessor::GetSymbVectPtr(inpPath);
+// 	if (!inpData) return -1;
+
+// 	std::size_t fileSize = inpData->size();
+
+
+// 	int fileSizeInt = static_cast<int>(fileSize);
+
+//     return fileSizeInt;
+
+// }
+
+
 void huffdecom(string inpPath, string folderPath)
 {
     std::shared_ptr<std::vector<char>> outData = Huffman::decode(inpPath);
@@ -557,6 +574,45 @@ void huffdecom(string inpPath, string folderPath)
     FileAccessor::WriteSymbVectToFile(outData, outPath);
 
 }
+
+
+void bwtCompress(string inpPath, string folderPath)
+{
+    std::shared_ptr<std::vector<char>> inpData = FileAccessor::GetSymbVectPtr(inpPath);
+	if (!inpData) return;
+	std::shared_ptr<std::vector<char>> BWTData;
+
+
+	BWTData = BWT::encode(inpData);
+
+
+
+    size_t lastSlash = inpPath.find_last_of('/');
+    string rawName = inpPath.substr(lastSlash+1);
+    string outPath = folderPath + "/" + rawName + ".bwt";
+
+    Huffman::encode(BWTData, outPath);
+
+}
+void bwtDecompress(string inpPath, string folderPath)
+{
+	cout<<"Huffman encode continue..."<<endl;
+	std::shared_ptr<std::vector<char>> Data = Huffman::decode(inpPath);
+
+	cout<<"BWT continue..."<<endl;
+    std::shared_ptr<std::vector<char>> outData = BWT::decode(Data);
+
+    size_t lastSlash = inpPath.find_last_of('/');
+    string rawName = inpPath.substr(lastSlash+1);
+    size_t lastDot = rawName.find_last_of('.');
+    string name = rawName.substr(0, lastDot);
+    string outPath = folderPath + "/New-b-" + name;
+
+	cout<<"Writting to folder..."<<endl;
+    FileAccessor::WriteSymbVectToFile(outData, outPath);
+
+}
+
 
 
 
@@ -605,7 +661,13 @@ int main()
     // FileAccessor::WriteSymbVectToFile(outData, outPath);
 
     //huffcom(inpPath, outFolder);
-    huffdecom(inpPath, outFolder);
+    //huffdecom(inpPath, outFolder);
+
+	//bwtCompress(inpPath, outFolder);
+	//bwtDecompress(inpPath, outFolder);
+
+
+	cout<< "CR: " << FileAccessor::GetFileSize(inpPath) <<endl;
 
 
 

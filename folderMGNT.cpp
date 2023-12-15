@@ -388,9 +388,186 @@ std::shared_ptr<std::vector<char> > Huffman::decode(const std::string & path) {
 	{
 		fin.close();
 		//error
+        return nullptr;
 	}
 }
 
+
+
+
+
+class BWT
+{
+private:
+    static const unsigned char MaxBlockSize = UCHAR_MAX - 1;
+
+    static std::vector<char> encodeBlock(std::vector<char> inpVect);
+
+    static std::vector<char> decodeBlock(std::vector<char> inpVect);
+
+public:
+    static std::shared_ptr<std::vector<char>> encode(const std::shared_ptr<std::vector<char>> &inpVect);
+
+    static std::shared_ptr<std::vector<char>> decode(const std::shared_ptr<std::vector<char>> &inpVect);
+};
+std::vector<char> BWT::encodeBlock(std::vector<char> inpVect)
+{
+    int blockSize = inpVect.size();
+    std::vector<char *> transMat;
+
+    for (int i = 0; i < blockSize; ++i)
+    {
+        transMat.push_back(new char[blockSize + 1]);
+    }
+
+    for (int i = 0; i < blockSize; ++i)
+    {
+        for (int j = 0; j < blockSize; ++j)
+        {
+            transMat.at(i)[j] = inpVect.at((i + j) % blockSize);
+        }
+    }
+    for (int i = 0; i < blockSize; ++i)
+    {
+        transMat.at(i)[blockSize] = '\0';
+    }
+
+    std::sort(transMat.begin(), transMat.end(), [](const char *lhs, const char *rhs)
+              { return strcmp(lhs, rhs) < 0; });
+
+    char *inpChar = new char[blockSize + 1];
+    for (int i = 0; i < blockSize; ++i)
+    {
+        inpChar[i] = inpVect.at(i);
+    }
+    inpChar[blockSize] = '\0';
+    unsigned char inpIndex = 0;
+    while (strcmp(inpChar, transMat[inpIndex]) != 0)
+        inpIndex++;
+
+    std::vector<char> result;
+    result.push_back(inpIndex);
+    for (int i = 0; i < blockSize; ++i)
+    {
+        result.push_back(transMat.at(i)[blockSize - 1]);
+    }
+
+    for (int i = 0; i < blockSize; ++i)
+    {
+        delete[] transMat.at(i);
+    }
+
+    return result;
+}
+
+std::vector<char> BWT::decodeBlock(std::vector<char> inpVect)
+{
+    unsigned char lineNumber = inpVect.front();
+    inpVect.erase(inpVect.begin());
+    int blockSize = inpVect.size();
+    std::vector<char *> transMat;
+
+    for (int i = 0; i < blockSize; ++i)
+    {
+        transMat.push_back(new char[blockSize + 1]);
+    }
+
+    for (int i = 0; i < blockSize; ++i)
+    {
+        for (int j = 0; j < blockSize; ++j)
+        {
+            transMat.at(i)[j] = '0';
+        }
+    }
+
+    for (int i = 0; i < blockSize; ++i)
+    {
+        transMat.at(i)[blockSize] = '\0';
+    }
+
+    for (int j = blockSize - 1; j >= 0; --j)
+    {
+        for (int i = 0; i < blockSize; ++i)
+        {
+            transMat.at(i)[j] = inpVect.at(i);
+        }
+        std::sort(transMat.begin(), transMat.end(), [](const char *lhs, const char *rhs)
+                  { return strcmp(lhs, rhs) < 0; });
+    }
+
+    std::vector<char> result;
+    for (int i = 0; i < blockSize; ++i)
+    {
+        if (lineNumber >= blockSize)
+            return result;
+        result.push_back(transMat.at(lineNumber)[i]);
+    }
+
+    for (int i = 0; i < blockSize; ++i)
+    {
+        delete[] transMat.at(i);
+    }
+
+    return result;
+}
+
+std::shared_ptr<std::vector<char>> BWT::encode(const std::shared_ptr<std::vector<char>> &inpVect)
+{
+    unsigned int inpVectsize = inpVect->size();
+    std::vector<char> *vect = new std::vector<char>;
+    std::shared_ptr<std::vector<char>> result = std::shared_ptr<std::vector<char>>(vect);
+    unsigned int from = 0;
+    unsigned int to = 0;
+    while (from < inpVectsize)
+    {
+        if (inpVectsize - from >= MaxBlockSize)
+        {
+            to = from + MaxBlockSize;
+        }
+        else
+        {
+            to = inpVectsize;
+        }
+        std::vector<char> inpblock;
+        std::vector<char> outblock;
+        for (unsigned int j = from; j < to; ++j)
+            inpblock.push_back(inpVect->at(j));
+        outblock = encodeBlock(inpblock);
+        for (auto el = outblock.begin(); el < outblock.end(); ++el)
+            result->push_back(*el);
+        from = to;
+    }
+    return result;
+}
+
+std::shared_ptr<std::vector<char>> BWT::decode(const std::shared_ptr<std::vector<char>> &inpVect)
+{
+    unsigned int inpVectsize = inpVect->size();
+    std::vector<char> *vect = new std::vector<char>;
+    std::shared_ptr<std::vector<char>> result = std::shared_ptr<std::vector<char>>(vect);
+    unsigned int from = 0;
+    unsigned int to = 0;
+    while (from < inpVectsize)
+    {
+        if (inpVectsize - from >= MaxBlockSize + 1)
+        {
+            to = from + MaxBlockSize + 1;
+        }
+        else
+        {
+            to = inpVectsize;
+        }
+        std::vector<char> inpblock;
+        std::vector<char> outblock;
+        for (unsigned int j = from; j < to; ++j)
+            inpblock.push_back(inpVect->at(j));
+        outblock = decodeBlock(inpblock);
+        for (auto el = outblock.begin(); el < outblock.end(); ++el)
+            result->push_back(*el);
+        from = to;
+    }
+    return result;
+}
 
 
 
@@ -922,6 +1099,47 @@ vector<string> FolderMGMT::getFilePathList()
 }
 
 
+
+
+
+
+void bwtCompress(string inpPath, string folderPath)
+{
+    std::shared_ptr<std::vector<char>> inpData = FileAccessor::GetSymbVectPtr(inpPath);
+	if (!inpData) return;
+	std::shared_ptr<std::vector<char>> BWTData;
+
+
+	BWTData = BWT::encode(inpData);
+
+
+
+    size_t lastSlash = inpPath.find_last_of('/');
+    string rawName = inpPath.substr(lastSlash+1);
+    string outPath = folderPath + "/" + rawName + ".bwt";
+
+    Huffman::encode(BWTData, outPath);
+
+}
+void bwtDecompress(string inpPath, string folderPath)
+{
+	cout<<"Huffman encode continue..."<<endl;
+	std::shared_ptr<std::vector<char>> Data = Huffman::decode(inpPath);
+
+	cout<<"BWT continue..."<<endl;
+    std::shared_ptr<std::vector<char>> outData = BWT::decode(Data);
+
+    size_t lastSlash = inpPath.find_last_of('/');
+    string rawName = inpPath.substr(lastSlash+1);
+    size_t lastDot = rawName.find_last_of('.');
+    string name = rawName.substr(0, lastDot);
+    string outPath = folderPath + "/New-b-" + name;
+
+	cout<<"Writting to folder..."<<endl;
+    FileAccessor::WriteSymbVectToFile(outData, outPath);
+
+}
+
 void compressFolderUsingLZ77( vector<string> filePaths)
 {
     size_t commonDirPos = filePaths[0].find_last_of('/');
@@ -987,9 +1205,15 @@ void compressedAllFiles( vector<string> filePaths)
     size_t commonDirPos = filePaths[0].find_last_of('/');
     string commonDirectory = filePaths[0].substr(0, commonDirPos);
     string decompressFolderPath = commonDirectory +  "/comFolder";
+    string comparisonFile = commonDirectory + "/comparison.txt";
 
 
-    // Read the files using the file paths
+    long int size;
+    long int hsize;
+    long int lsize;
+    long int bsize;
+
+    std::ofstream compareFile(comparisonFile);
 
 
     if (mkdir(decompressFolderPath.c_str(), 0777) == 0)
@@ -998,10 +1222,81 @@ void compressedAllFiles( vector<string> filePaths)
 
         for (const string& filePath : filePaths)
         {
-            //huffcom(filePath, decompressFolderPath);
-            //lz77Compress(filePath, decompressFolderPath);
+            size_t lastSlash = filePath.find_last_of('/');
+            string rawName = filePath.substr(lastSlash+1);
+
+            size = FileAccessor::GetFileSize(filePath);
+
+            huffcom(filePath, decompressFolderPath);
             //huffCompression(filePath, decompressFolderPath);
+            string hOutPath = decompressFolderPath + "/" + rawName + ".huff";
+            hsize = FileAccessor::GetFileSize(hOutPath);
+
+            lz77Compress(filePath, decompressFolderPath);
+            string lzOutPath = decompressFolderPath + "/" + rawName + ".lzss";
+            lsize = FileAccessor::GetFileSize(lzOutPath);
+
+            if(lsize < hsize)
+            {
+                if (std::remove(hOutPath.c_str()) == 0) {
+                    std::cout << "File deleted successfully: " << hOutPath << std::endl;
+                } else {
+                std::cerr << "Error: Could not delete the file: " << hOutPath << std::endl;
+                    
+                }
+            }else{
+                if (std::remove(lzOutPath.c_str()) == 0) {
+                    std::cout << "File deleted successfully: " << lzOutPath << std::endl;
+                } else {
+                std::cerr << "Error: Could not delete the file: " << lzOutPath << std::endl;
+                    
+                }
+            }
+
+
+            bsize = hsize;
+            if(size < 6000000)
+            {
+                bwtCompress(filePath, decompressFolderPath);
+                string bOutPath = decompressFolderPath + "/" + rawName + ".bwt";
+                bsize = FileAccessor::GetFileSize(bOutPath);
+
+                if(bsize < lsize)
+                {
+                    if (std::remove(lzOutPath.c_str()) == 0) {
+                        std::cout << "File deleted successfully: " << lzOutPath << std::endl;
+                    } else {
+                        std::cerr << "Error: Could not delete the file: " << lzOutPath << std::endl;
+                    
+                    }   
+                }else{
+                    if (std::remove(bOutPath.c_str()) == 0) {
+                        std::cout << "File deleted successfully: " << bOutPath << std::endl;
+                    } else {
+                        std::cerr << "Error: Could not delete the file: " << bOutPath << std::endl;
+                    
+                    }
+                }
+            }
+
+            cout<<"Size: "<<size<<"   Huffman: "<<hsize<<"   LZ77: "<<lsize<<"   BWT: "<< bsize <<endl;
+        
+            if (compareFile.is_open()) 
+            {
+                compareFile << "-----------------------------------------------" <<endl;
+                compareFile<<"FilePath: "<<filePath<<endl;
+                compareFile << "-----------------------------------------------" <<endl<<endl;
+                
+                compareFile<<"Original File Size: "<<size<<" Bytes"<<endl;
+                compareFile<<"Huffman Compressed File Size: "<<hsize<<" Bytes"<<endl;
+                compareFile<<"LZ77 Compressed File Size: "<<lsize<<" Bytes"<<endl;
+                compareFile<<"BWT Compressed File Size: "<<bsize<<" Bytes"<<endl<<endl<<endl;
+            } else {
+                std::cerr << "Error: Could not open the file for writing." << std::endl;
+            }
+
         }
+        compareFile.close();
     }
     else
     {

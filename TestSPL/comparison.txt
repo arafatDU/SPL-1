@@ -1,0 +1,30 @@
+-----------------------------------------------
+FilePath: /mnt/e/MyProject/SPL-1/TestSPL/12mb.txt
+-----------------------------------------------
+
+Original File Size: 13169722 Bytes
+Huffman Compressed File Size: 7391082 Bytes
+LZ77 Compressed File Size: 7287993 Bytes
+BWT Compressed File Size: 7391082 Bytes
+
+
+-----------------------------------------------
+FilePath: /mnt/e/MyProject/SPL-1/TestSPL/file1.txt
+-----------------------------------------------
+
+Original File Size: 536 Bytes
+Huffman Compressed File Size: 196 Bytes
+LZ77 Compressed File Size: 51 Bytes
+BWT Compressed File Size: 221 Bytes
+
+
+-----------------------------------------------
+FilePath: /mnt/e/MyProject/SPL-1/TestSPL/file2.txt
+-----------------------------------------------
+
+Original File Size: 52 Bytes
+Huffman Compressed File Size: 37 Bytes
+LZ77 Compressed File Size: 18 Bytes
+BWT Compressed File Size: 54 Bytes
+
+
