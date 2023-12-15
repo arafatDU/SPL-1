@@ -1233,6 +1233,28 @@ vector<string> FolderMGMT::getFilePathList()
 
 
 
+void compressFolderUsingRLE( vector<string> filePaths)
+{
+    size_t commonDirPos = filePaths[0].find_last_of('/');
+    string commonDirectory = filePaths[0].substr(0, commonDirPos);
+    string decompressFolderPath = commonDirectory +  "/rleComFolder";
+
+
+    if (mkdir(decompressFolderPath.c_str(), 0777) == 0)
+    {
+        cout << "\nCreated folder: " << decompressFolderPath << endl;
+
+        for (const string& filePath : filePaths)
+        {
+            rleCompress(filePath, decompressFolderPath);      
+        }
+    }
+    else
+    {
+        cout << "Failed to create folder: " << decompressFolderPath << endl;
+    }
+}
+
 
 
 void compressFolderUsingBWT( vector<string> filePaths)
@@ -1453,6 +1475,9 @@ void decompressedAllFiles( vector<string> filePaths)
             }else if(compressMode == "bwt")
             {
                 cout<<"Loading..."<<endl;
+            }else if(compressMode == "rlec")
+            {
+                rleDecompress(filePath, decompressFolderPath);
             }else{
                 cout<<"Couldn't find compress mode."<<endl;
             }
@@ -1487,8 +1512,9 @@ int main() {
              << "5 - Compress Folder using Huffman" << endl
              << "6 - Compress Folder using LZ77" << endl
              << "7 - Compress Folder using BWT" << endl
-             << "8 - Decompress Your Folder" << endl
-             << "9 - exit" << endl;
+             << "8 - Compress Folder using RLE" << endl
+             << "9 - Decompress Your Folder" << endl
+             << "0 - exit" << endl;
 
         cout << "Enter: ";
         cin >> choice;
@@ -1538,6 +1564,13 @@ int main() {
                 cin.get();
                 break;
             case 8:
+                cout << "\n---------------------------------------------------"
+                     << "\nCompression of [" << fmgmt->dirMGMT->getDirPath() << "]\n"
+                     << "---------------------------------------------------" << endl;
+                compressFolderUsingRLE(fmgmt->getFilePathList());
+                cin.get();
+                break;
+            case 9:
                 {string folderName;
                 cout<<"Enter folder name: ";
                 cin>>folderName;
@@ -1551,7 +1584,7 @@ int main() {
                 cin.get();
                 fmgmt->dirMGMT->setDirPath(path);
                 break;}
-            case 9:
+            case 0:
                 cout << "Exiting FolderMGMT" << endl;
                 running = false;
                 break;
@@ -1649,7 +1682,7 @@ void rleCompress(string inpPath, string folderPath)
 
     size_t lastSlash = inpPath.find_last_of('/');
     string rawName = inpPath.substr(lastSlash+1);
-    string outPath = folderPath + "/" + rawName + ".rle";
+    string outPath = folderPath + "/" + rawName + ".rlec";
 
     RLE::encode(inpData, outPath);
 
