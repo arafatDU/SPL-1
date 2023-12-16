@@ -1,0 +1,96 @@
+-----------------------------------------------
+FilePath: /mnt/e/MyProject/SPL-1/TestSPL/file1.txt
+-----------------------------------------------
+
+Original File Size: 819 Bytes
+Huffman Compressed File Size: 222 Bytes
+LZ77 Compressed File Size: 47 Bytes
+RLE Compressed File Size: 140090359235441 Bytes
+BWT Compressed File Size: 242 Bytes
+
+Compression Ratio:-
+Huffman Coding Algorithm = 27.1062
+LZ77 Algorithm = 5.73871
+RLE Algorithm = 1.7105e+13
+BWT Algorithm = 29.5482
+
+Compression Duration:-
+Huffman Coding Algorithm = 0.0037967
+LZ77 Algorithm = 0.011198
+LZ77 Algorithm = 0.0018502
+BWT Algorithm = 0.01651
+
+
+
+-----------------------------------------------
+FilePath: /mnt/e/MyProject/SPL-1/TestSPL/file2.txt
+-----------------------------------------------
+
+Original File Size: 356 Bytes
+Huffman Compressed File Size: 117 Bytes
+LZ77 Compressed File Size: 359 Bytes
+RLE Compressed File Size: 140090359235441 Bytes
+BWT Compressed File Size: 140 Bytes
+
+Compression Ratio:-
+Huffman Coding Algorithm = 32.8652
+LZ77 Algorithm = 100.843
+RLE Algorithm = 3.93512e+13
+BWT Algorithm = 39.3258
+
+Compression Duration:-
+Huffman Coding Algorithm = 0.0022381
+LZ77 Algorithm = 0.0109911
+LZ77 Algorithm = 0.0015881
+BWT Algorithm = 0.011662
+
+
+
+-----------------------------------------------
+FilePath: /mnt/e/MyProject/SPL-1/TestSPL/file3.txt
+-----------------------------------------------
+
+Original File Size: 521 Bytes
+Huffman Compressed File Size: 874 Bytes
+LZ77 Compressed File Size: 526 Bytes
+RLE Compressed File Size: 140090359235441 Bytes
+BWT Compressed File Size: 893 Bytes
+
+Compression Ratio:-
+Huffman Coding Algorithm = 167.754
+LZ77 Algorithm = 100.96
+RLE Algorithm = 2.68887e+13
+BWT Algorithm = 171.401
+
+Compression Duration:-
+Huffman Coding Algorithm = 0.0156356
+LZ77 Algorithm = 0.0140399
+LZ77 Algorithm = 0.0024877
+BWT Algorithm = 0.0358425
+
+
+
+-----------------------------------------------
+FilePath: /mnt/e/MyProject/SPL-1/TestSPL/file4.txt
+-----------------------------------------------
+
+Original File Size: 2915 Bytes
+Huffman Compressed File Size: 1914 Bytes
+LZ77 Compressed File Size: 148 Bytes
+RLE Compressed File Size: 140090359235441 Bytes
+BWT Compressed File Size: 1974 Bytes
+
+Compression Ratio:-
+Huffman Coding Algorithm = 65.6604
+LZ77 Algorithm = 5.07719
+RLE Algorithm = 4.80584e+12
+BWT Algorithm = 67.7187
+
+Compression Duration:-
+Huffman Coding Algorithm = 0.0400371
+LZ77 Algorithm = 0.0201538
+LZ77 Algorithm = 0.001824
+BWT Algorithm = 0.0599807
+
+
+
