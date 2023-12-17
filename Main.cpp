@@ -1263,7 +1263,7 @@ void compressFolderUsingLZ77( vector<string> filePaths)
 
         for (const string& filePath : filePaths)
         {
-            lz77Compress(filePath, decompressFolderPath);      
+            //lz77Compress(filePath, decompressFolderPath);      
         }
     }
     else
